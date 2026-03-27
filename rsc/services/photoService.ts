@@ -3,34 +3,51 @@ import path from 'path';
 import fs from 'fs/promises';
 
 const dbPath = path.join(process.cwd(), 'photos.db');
-console.log('🗄️ SQLite path:', dbPath);  // ✅ Лог пути БД
 
-// ✅ ПРОВЕРКА ПРАВ НА ЗАПИСЬ
-const dbDir = path.dirname(dbPath);
-console.log('🗄️ DB dir writable?', await fs.access(dbDir).then(() => 'YES', () => 'NO'));
+let db: sqlite3.Database;
 
-const db = new sqlite3.Database(dbPath, (err) => {
-    if (err) {
-        console.error('💥 DB CONNECTION ERROR:', err.message);
-    } else {
-        console.log('✅ DB connected:', dbPath);
-    }
-});
+export async function init(): Promise<void> {
+    console.log('🗄️ SQLite path:', dbPath);
 
-db.serialize(() => {
-    console.log('🗄️ Creating table...');
-    db.run(`
-        CREATE TABLE IF NOT EXISTS photos (
-            id TEXT PRIMARY KEY,
-            title TEXT NOT NULL,
-            filename TEXT NOT NULL,
-            filepath TEXT NOT NULL
-        )
-    `, (err) => {
-        if (err) console.error('💥 TABLE CREATE ERROR:', err);
-        else console.log('✅ Table ready');
+    // Check directory writability before opening the database
+    const dbDir = path.dirname(dbPath);
+    const writable = await fs.access(dbDir).then(() => 'YES', () => 'NO');
+    console.log('🗄️ DB dir writable?', writable);
+
+    await new Promise<void>((resolve, reject) => {
+        db = new sqlite3.Database(dbPath, (err) => {
+            if (err) {
+                console.error('💥 DB CONNECTION ERROR:', err.message);
+                reject(err);
+            } else {
+                console.log('✅ DB connected:', dbPath);
+                resolve();
+            }
+        });
     });
-});
+
+    await new Promise<void>((resolve, reject) => {
+        console.log('🗄️ Creating table...');
+        db.serialize(() => {
+            db.run(`
+                CREATE TABLE IF NOT EXISTS photos (
+                    id TEXT PRIMARY KEY,
+                    title TEXT NOT NULL,
+                    filename TEXT NOT NULL,
+                    filepath TEXT NOT NULL
+                )
+            `, (err) => {
+                if (err) {
+                    console.error('💥 TABLE CREATE ERROR:', err);
+                    reject(err);
+                } else {
+                    console.log('✅ Table ready');
+                    resolve();
+                }
+            });
+        });
+    });
+}
 
 export interface Photo {
     id: string;
