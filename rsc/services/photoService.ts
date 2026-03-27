@@ -8,7 +8,7 @@ export interface Photo {
     filepath: string;
 }
 
-const DB_PATH = 'photos.db';
+const DB_PATH = ':memory:';
 
 const db = new sqlite3.Database(DB_PATH, (err) => {
     if (err) {
