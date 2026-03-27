@@ -1,7 +1,8 @@
 const form = document.getElementById('photoForm');
 const list = document.getElementById('photoList');
 
-const API_BASE = '/api/photos/';
+// ✅ Не объявляем const API_BASE здесь, он уже в index.html
+// const API_BASE = '/api/photos/';
 
 async function loadPhotos() {
     const res = await fetch(API_BASE);
@@ -17,7 +18,7 @@ async function loadPhotos() {
 }
 
 async function createPhoto(e) {
-    e.preventDefault();
+    e.preventDefault(); // ✅ Важно!
 
     const titleInput = document.getElementById('title');
     const photoInput = document.getElementById('photo');

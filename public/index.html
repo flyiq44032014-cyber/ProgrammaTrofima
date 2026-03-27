@@ -3,9 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <title>Фото галерея</title>
+    <script>
+        const API_BASE = '/api/photos/';
+    </script>
     <script src="js/app.js" defer></script>
 </head>
 <body>
+
 <h1>Управление фото</h1>
 
 <!-- ✅ Новая форма для multer -->
@@ -17,8 +21,5 @@
 
 <ul id="photoList"></ul>
 
-<script>
-    const API_BASE = 'http://localhost:3000/api/photos/';
-</script>
 </body>
 </html>
