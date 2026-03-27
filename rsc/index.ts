@@ -1,18 +1,12 @@
 
 import 'dotenv/config';
 import express from 'express';
+import type { NextFunction } from 'express';
+import fs from 'node:fs';
 
 import photosRouter from "./routes/photos.js";
 
 import path from 'path';
-
-import { fileURLToPath } from 'url';
-
-
-
-const __filename = fileURLToPath(import.meta.url);
-
-const __dirname = path.dirname(__filename);
 
 
 
@@ -34,10 +28,21 @@ app.use("/api/photos", photosRouter);
 
 
 
-app.get('/', (req, res) => {
+app.get('/', (req, res, next) => {
+    const indexPath = path.resolve(process.cwd(), 'public', 'index.html');
+    if (!fs.existsSync(indexPath)) {
+        console.error("Missing public/index.html at", indexPath);
+        return res.status(500).type("text").send("Missing public/index.html (deployment bundle)");
+    }
+    res.sendFile(indexPath, err => {
+        if (err) next(err);
+    });
+});
 
-    res.sendFile(path.join(process.cwd(), 'public/index.html'));
-
+app.use((err: unknown, req: express.Request, res: express.Response, _next: NextFunction) => {
+    console.error(err);
+    if (res.headersSent) return;
+    res.status(500).type("text").send("Internal server error");
 });
 
 if (!process.env.VERCEL) {

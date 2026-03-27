@@ -17,8 +17,15 @@ const upload = multer({
     }
 });
 
-// Load cloud_name / api_key / api_secret from process.env.CLOUDINARY_URL (cloudinary://...)
-cloudinary.config(true);
+function loadCloudinaryFromEnv(): void {
+    try {
+        cloudinary.config(true);
+    } catch (err) {
+        console.error("Cloudinary config failed (check CLOUDINARY_URL)", err);
+    }
+}
+
+loadCloudinaryFromEnv();
 
 function cloudinaryConfigured(): boolean {
     const cfg = cloudinary.config() as { cloud_name?: string; api_key?: string; api_secret?: string };
