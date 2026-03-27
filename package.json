@@ -10,17 +10,18 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "express": "^4.x",
-    "dotenv": "^16.x",
     "cloudinary": "^1.x",
+    "dotenv": "^16.x",
+    "express": "^4.x",
     "multer": "^1.x",
     "pg": "^8.x"
   },
   "devDependencies": {
-    "typescript": "^5.x",
     "@types/express": "^5.x",
-    "@types/node": "^20.x",
     "@types/multer": "^1.x",
-    "ts-node": "^10.x"
+    "@types/node": "^20.x",
+    "@types/pg": "^8.20.0",
+    "ts-node": "^10.x",
+    "typescript": "^5.x"
   }
 }
