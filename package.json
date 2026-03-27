@@ -5,13 +5,14 @@
   "license": "MIT",
   "scripts": {
     "watch": "tsc -w",
-    "dev": "nodemon \"node dist/index.js\"",
+    "dev": "node --loader ts-node/esm dist/index.js",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node -r dotenv/config dist/index.js"
   },
   "type": "module",
   "dependencies": {
     "@types/cors": "^2.8.19",
+    "cloudinary": "^2.9.0",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
