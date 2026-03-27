@@ -1,38 +1,17 @@
-
 import "dotenv/config";
 import express from "express";
 import type { NextFunction } from "express";
 import fs from "node:fs";
-import path from "path";
+import path from "node:path";
 
 import photosRouter from "./routes/photos.js";
 
 const app = express();
-
 const port = 3000;
 
 if (process.env.VERCEL) {
     app.use((req, _res, next) => {
-        const fromHeader =
-            typeof req.headers["x-invoke-path"] === "string"
-                ? req.headers["x-invoke-path"]
-                : typeof req.headers["x-forwarded-uri"] === "string"
-                  ? req.headers["x-forwarded-uri"]
-                  : typeof req.headers["x-vercel-forwarded-path"] === "string"
-                    ? req.headers["x-vercel-forwarded-path"]
-                    : undefined;
-
-        if (fromHeader) {
-            try {
-                const normalized = fromHeader.startsWith("http")
-                    ? fromHeader
-                    : `http://localhost${fromHeader.startsWith("/") ? "" : "/"}${fromHeader}`;
-                const u = new URL(normalized);
-                req.url = u.pathname + u.search;
-            } catch {
-                req.url = fromHeader.startsWith("/") ? fromHeader : `/${fromHeader}`;
-            }
-        } else if (req.originalUrl && req.originalUrl !== req.url) {
+        if (req.originalUrl && req.originalUrl !== req.url) {
             req.url = req.originalUrl;
         }
         next();
@@ -40,6 +19,11 @@ if (process.env.VERCEL) {
 }
 
 app.use(express.json());
+
+app.get("/api/health", (_req, res) => {
+    res.setHeader("Cache-Control", "no-store");
+    res.json({ ok: true, env: { vercel: Boolean(process.env.VERCEL) } });
+});
 
 app.use("/api/photos", photosRouter);
 
@@ -55,7 +39,6 @@ if (!process.env.VERCEL) {
     app.get("/", (req, res, next) => {
         const indexPath = path.resolve(process.cwd(), "public", "index.html");
         if (!fs.existsSync(indexPath)) {
-            console.error("Missing public/index.html at", indexPath);
             return res.status(500).type("text").send("Missing public/index.html");
         }
         res.sendFile(indexPath, err => {

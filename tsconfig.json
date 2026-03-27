@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "rootDir": "./rsc",
+    "rootDir": "./src",
     "outDir": "./dist",
     "module": "nodenext",
     "target": "esnext",
@@ -12,15 +12,11 @@
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
     "strict": true,
-    "jsx": "react-jsx",
     "verbatimModuleSyntax": true,
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true
   },
-  "include": [
-    "rsc/**/*",
-    "types.d.ts"
-  ]
+  "include": ["src/**/*"]
 }

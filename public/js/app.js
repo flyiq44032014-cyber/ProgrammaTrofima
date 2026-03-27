@@ -3,6 +3,14 @@ const API_BASE = '/api/photos';
 const form = document.getElementById('photoForm');
 const list = document.getElementById('photoList');
 
+function escapeHtml(s) {
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
 async function loadPhotos() {
     const res = await fetch(API_BASE, { cache: 'no-store' });
     const ct = res.headers.get('content-type') || '';
@@ -13,10 +21,10 @@ async function loadPhotos() {
     const photos = await res.json();
     list.innerHTML = photos.map(photo => `
         <li>
-            <img src="${photo.filepath}" width="100" height="100" style="cursor:pointer;" onclick="openModal('${photo.filepath}')">
-            ${photo.title}
-            <button onclick="editPhoto('${photo.id}', '${photo.title}')">Изменить</button>
-            <button onclick="deletePhoto('${photo.id}')">Удалить</button>
+            <img src="${escapeHtml(photo.filepath)}" width="100" height="100" style="cursor:pointer;" onclick='openModal(${JSON.stringify(photo.filepath)})'>
+            ${escapeHtml(photo.title)}
+            <button type="button" onclick="editPhoto(${JSON.stringify(photo.id)}, ${JSON.stringify(photo.title)})">Изменить</button>
+            <button type="button" onclick="deletePhoto(${JSON.stringify(photo.id)})">Удалить</button>
         </li>
     `).join('');
 }
