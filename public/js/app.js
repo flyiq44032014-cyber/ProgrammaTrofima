@@ -1,6 +1,8 @@
 const form = document.getElementById('photoForm');
 const list = document.getElementById('photoList');
 
+const API_BASE = '/api/photos/';
+
 async function loadPhotos() {
     const res = await fetch(API_BASE);
     const photos = await res.json();
