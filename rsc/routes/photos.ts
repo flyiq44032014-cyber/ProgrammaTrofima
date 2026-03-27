@@ -14,8 +14,6 @@ router.get("/",
 router.post("/",
     photoController.createPhotoHandler);
 
-router.post("/", photoController.createPhotoHandler);
-
 router.get('/:id', photoController.getPhoto);
 
 router.put('/:id', photoController.updatePhotoHandler);

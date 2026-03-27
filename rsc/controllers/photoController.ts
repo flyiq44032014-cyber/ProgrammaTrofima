@@ -1,135 +1,206 @@
 import express from "express";
 import * as expressType from "express";
 import multer from "multer";
-import cloudinary from "cloudinary";
-import path from "path";
-import fs from "fs";
-import type { Photo } from "../services/photoService.js";
+import { v2 as cloudinary } from "cloudinary";
 import { getAllPhotos, createPhoto, getPhotoById, updatePhoto, deletePhoto } from "../services/photoService.js";
 
-cloudinary.v2.config();
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith("image/")) {
+            cb(null, true);
+            return;
+        }
+        cb(new Error("Только изображения!"));
+    }
+});
 
-console.log('CLOUDINARY_CLOUD_NAME:', process.env.CLOUDINARY_CLOUD_NAME);
-console.log('TROFIM_POSTGRES_URL:', process.env.TROFIM_POSTGRES_URL);
+cloudinary.config({
+    cloudinary_url: process.env.CLOUDINARY_URL
+});
 
-// ✅ multer: в памяти, а не на диске
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
+
 
 // ✅ GET все — async
+
 export const getPhotos = async (req: express.Request, res: express.Response) => {
+
     try {
+
         const photos = await getAllPhotos();
+
         res.json(photos);
+
     } catch (error) {
-        res.status(500).json({ error: "Ошибка сервера" });
+
+        res.status(500).json({ error: 'Ошибка сервера' });
+
     }
+
 };
 
-// ✅ POST /api/photos — с файлом в Cloudinary
+
+
+// ✅ POST с файлом — async middleware
+
 export const createPhotoHandler: expressType.RequestHandler[] = [
+
     upload.single("photo"),
+
     async (req: expressType.Request, res: express.Response) => {
+
         try {
+
             const { title } = req.body;
-            const file = (req as any).file as Express.Multer.File;
 
-            if (!title) {
-                return res.status(400).json({ error: "Название обязательно" });
+            const file = (req as any).file;
+
+
+
+            if (!title || !file) {
+
+                return res.status(400).json({ error: "Название и фото обязательны" });
+
             }
-            if (!file || !file.buffer) {
-                return res.status(400).json({ error: "Файл обязателен" });
-            }
 
-            // 👇 Загружаем файл в Cloudinary через upload_stream
-            const uploadStream = cloudinary.v2.uploader.upload_stream(
-                {
-                    folder: "programmatrofima_photos",
-                    public_id: `photo_${Date.now()}`,
-                    resource_type: "auto",
-                },
-                async (error, result: cloudinary.UploadApiResponse | undefined) => {
-                    if (error || !result) {
-                        console.error("Cloudinary upload error:", error);
-                        return res.status(500).json({ error: "Ошибка загрузки в Cloudinary" });
-                    }
 
-                    try {
-                        const newPhoto = await createPhoto({
-                            title,
-                            filename: result.original_filename,
-                            filepath: result.secure_url,
+
+            const uploaded = await new Promise<{ secure_url: string; public_id: string }>((resolve, reject) => {
+                const stream = cloudinary.uploader.upload_stream(
+                    { folder: "programmatrofima" },
+                    (error, result) => {
+                        if (error || !result) {
+                            reject(error ?? new Error("Cloudinary upload failed"));
+                            return;
+                        }
+                        resolve({
+                            secure_url: result.secure_url,
+                            public_id: result.public_id
                         });
-
-                        res.status(201).json(newPhoto);
-                    } catch (dbError) {
-                        res.status(500).json({ error: "Ошибка при сохранении в БД" });
                     }
-                }
-            );
+                );
+                stream.end(file.buffer);
+            });
 
-            uploadStream.end(file.buffer);
+            const newPhoto = await createPhoto({
+                title,
+                filename: file.originalname,
+                filepath: uploaded.secure_url,
+                cloudinary_public_id: uploaded.public_id
+            });
+
+
+
+            res.status(201).json(newPhoto);
+
         } catch (error) {
-            res.status(500).json({ error: "Ошибка сервера при создании фото" });
+
+            res.status(500).json({ error: 'Ошибка создания' });
+
         }
-    },
+
+    }
+
 ];
 
+
+
 // ✅ GET /:id — async
+
 export const getPhoto = async (req: express.Request, res: express.Response) => {
+
     try {
+
         const id = req.params.id as string;
+
         const photo = await getPhotoById(id);
 
-        if (!photo) {
-            return res.status(404).json({ error: "Фото не найдено" });
-        }
+        if (!photo) return res.status(404).json({ error: "Фото не найдено" });
 
         res.json(photo);
+
     } catch (error) {
-        res.status(500).json({ error: "Ошибка сервера" });
+
+        res.status(500).json({ error: 'Ошибка сервера' });
+
     }
+
 };
 
-// ✅ PUT /api/photos/:id — обновить title
+
+
+// ✅ PUT /:id — async
+
 export const updatePhotoHandler = async (req: express.Request, res: express.Response) => {
+
     try {
+
         const id = req.params.id as string;
+
         const { title } = req.body;
 
-        if (!id || !title) {
+
+
+        if (!title || typeof id !== "string") {
+
             return res.status(400).json({ error: "ID и title обязательны" });
+
         }
+
+
 
         const updated = await updatePhoto(id, { title });
 
-        if (!updated) {
-            return res.status(404).json({ error: "Фото не найдено" });
-        }
+        if (!updated) return res.status(404).json({ error: "Фото не найдено" });
 
         res.json(updated);
+
     } catch (error) {
-        res.status(500).json({ error: "Ошибка обновления" });
+
+        res.status(500).json({ error: 'Ошибка обновления' });
+
     }
+
 };
 
-// ✅ DELETE /api/photos/:id
+
+
+// ✅ DELETE /:id — async
+
 export const deletePhotoHandler = async (req: express.Request, res: express.Response) => {
+
     try {
+
         const id = req.params.id as string;
 
-        if (!id) {
-            return res.status(400).json({ error: "ID обязателен" });
+        if (typeof id !== "string") {
+
+            return res.status(400).json({ error: "ID неверный" });
+
+        }
+
+
+
+        const photo = await getPhotoById(id);
+        if (!photo) return res.status(404).json({ error: "Фото не найдено" });
+
+        if (photo.cloudinary_public_id) {
+            await cloudinary.uploader.destroy(photo.cloudinary_public_id, {
+                resource_type: "image"
+            });
         }
 
         const deleted = await deletePhoto(id);
 
-        if (!deleted) {
-            return res.status(404).json({ error: "Фото не найдено" });
-        }
+        if (!deleted) return res.status(404).json({ error: "Фото не найдено" });
 
         res.json({ message: "Фото удалено" });
+
     } catch (error) {
-        res.status(500).json({ error: "Ошибка удаления" });
+
+        res.status(500).json({ error: 'Ошибка удаления' });
+
     }
+
 };

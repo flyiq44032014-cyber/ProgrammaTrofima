@@ -7,14 +7,26 @@ const pool = new Pool({
 });
 
 export interface Photo {
-    id: string; title: string; filename: string; filepath: string;
+    id: string;
+    title: string;
+    filename: string;
+    filepath: string;
+    cloudinary_public_id: string | null;
 }
 
-pool.query(`
+await pool.query(`
   CREATE TABLE IF NOT EXISTS photos (
-    id TEXT PRIMARY KEY, title TEXT NOT NULL, 
-    filename TEXT NOT NULL, filepath TEXT NOT NULL
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    filename TEXT NOT NULL,
+    filepath TEXT NOT NULL,
+    cloudinary_public_id TEXT
   )
+`);
+
+await pool.query(`
+  ALTER TABLE photos
+  ADD COLUMN IF NOT EXISTS cloudinary_public_id TEXT
 `);
 
 export async function getAllPhotos(): Promise<Photo[]> {
@@ -22,9 +34,17 @@ export async function getAllPhotos(): Promise<Photo[]> {
     return result.rows;
 }
 
-export async function createPhoto(data: {title:string, filename:string, filepath:string}): Promise<Photo> {
+export async function createPhoto(data: {
+    title: string;
+    filename: string;
+    filepath: string;
+    cloudinary_public_id: string;
+}): Promise<Photo> {
     const id = Date.now().toString();
-    await pool.query('INSERT INTO photos VALUES ($1,$2,$3,$4)', [id, data.title, data.filename, data.filepath]);
+    await pool.query(
+        'INSERT INTO photos (id, title, filename, filepath, cloudinary_public_id) VALUES ($1,$2,$3,$4,$5)',
+        [id, data.title, data.filename, data.filepath, data.cloudinary_public_id]
+    );
     return { id, ...data };
 }
 
