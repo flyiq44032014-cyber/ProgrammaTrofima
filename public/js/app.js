@@ -1,6 +1,6 @@
 
-// Без завершающего «/» — иначе POST на /api/photos/ на Vercel даёт 405 и HTML вместо JSON
-const API_BASE = '/api/photos';
+// Без /api — на Vercel префикс /api зарезервирован под serverless-файлы в папке api/
+const API_BASE = '/photos';
 const form = document.getElementById('photoForm');
 const list = document.getElementById('photoList');
 

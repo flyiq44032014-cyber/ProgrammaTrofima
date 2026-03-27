@@ -13,7 +13,7 @@ const port = 3000;
 
 app.use(express.json());
 
-app.use("/api/photos", photosRouter);
+app.use("/photos", photosRouter);
 
 app.use((err: unknown, req: express.Request, res: express.Response, _next: NextFunction) => {
     console.error(err);
