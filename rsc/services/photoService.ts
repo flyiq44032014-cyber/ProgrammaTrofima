@@ -8,10 +8,10 @@ const db: Database = new sqlite3.Database(dbPath);
 db.serialize(() => {
     db.run(`
         CREATE TABLE IF NOT EXISTS photos (
-                                              id TEXT PRIMARY KEY,
-                                              title TEXT NOT NULL,
-                                              filename TEXT NOT NULL,
-                                              filepath TEXT NOT NULL
+        id TEXT PRIMARY KEY,
+         title TEXT NOT NULL,
+         filename TEXT NOT NULL,
+         filepath TEXT NOT NULL
         )
     `);
 });

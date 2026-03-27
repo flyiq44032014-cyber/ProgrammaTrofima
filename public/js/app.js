@@ -1,3 +1,5 @@
+
+const API_BASE = '/api/photos/';
 const form = document.getElementById('photoForm');
 const list = document.getElementById('photoList');
 
