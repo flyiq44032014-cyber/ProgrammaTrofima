@@ -1,6 +1,7 @@
 import express from 'express';
 import type { Request, Response, NextFunction } from 'express';  // ✅ ИМПОРТ ТИПОВ
 import photosRouter from './routes/photos.js';
+import { init as initPhotoService } from './services/photoService.js';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -45,4 +46,8 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 const port = (process.env.PORT ? parseInt(process.env.PORT, 10) : 3000) as number;
 app.listen(port, '0.0.0.0', () => {
     console.log(`✅ Server listening on 0.0.0.0:${port}`);
+    initPhotoService().catch((err) => {
+        console.error('💥 Failed to initialize photo service:', err);
+        process.exit(1);
+    });
 });
