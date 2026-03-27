@@ -3,28 +3,18 @@
   "version": "1.0.0",
   "main": "dist/index.js",
   "license": "MIT",
-
-
-  "engines": {
-    "node": "20.x"
-  },
-
   "scripts": {
     "watch": "tsc -w",
-    "dev": "nodemon  \"node dist/index.js\"",
+    "dev": "nodemon \"node dist/index.js\"",
     "build": "tsc",
-    "start": "node  dist/index.js"
+    "start": "node dist/index.js"
   },
-
   "type": "module",
-
   "dependencies": {
     "express": "^5.2.1",
     "multer": "^2.1.1",
-
     "sqlite3": "^5.1.7"
   },
-
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/multer": "^2.1.0",
