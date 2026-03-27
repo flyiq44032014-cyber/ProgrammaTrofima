@@ -1,166 +1,227 @@
 import express from "express";
-import type { Request, Response, RequestHandler } from "express";
+
+import * as expressType from "express";
 
 import multer from "multer";
+
 import path from "path";
 
-// тип фото (для совместимости с photoService)
-export type Photo = {
-    id: string;
-    title: string;
-    filename: string;
-    filepath: string;
-};
+import fs from "fs";
 
-import type { Photo as InternalPhoto } from "../services/photoService.js";
-import {
-    getAllPhotos,
-    createPhoto,
-    getPhotoById,
-    updatePhoto,
-    deletePhoto,
-} from "../services/photoService.js";
+import type { Photo } from "../services/photoService.js";
 
-// ✅ uploads папка (создаётся в index.ts при старте сервера)
+import { getAllPhotos, createPhoto, getPhotoById, updatePhoto, deletePhoto } from "../services/photoService.js";
+
+
+
+// ✅ uploads папка
+
 const uploadDir = path.join(process.cwd(), "uploads");
 
+if (!fs.existsSync(uploadDir)) {
+
+    fs.mkdirSync(uploadDir, { recursive: true });
+
+}
+
+
+
 // ✅ Multer config
+
 const storage = multer.diskStorage({
+
     destination: (req, file, cb) => cb(null, uploadDir),
+
     filename: (req, file, cb) => {
+
         cb(null, Date.now() + "-" + Math.round(Math.random() * 1E9) + path.extname(file.originalname));
+
     }
+
 });
+
+
 
 const upload = multer({
+
     storage,
+
     limits: { fileSize: 5 * 1024 * 1024 },
+
     fileFilter: (req, file, cb) => {
+
         if (file.mimetype.startsWith('image/')) {
+
             cb(null, true);
+
         } else {
+
             cb(new Error('Только изображения!'));
+
         }
+
     }
+
 });
 
-// ✅ GET все
-export const getPhotos = async (req: Request, res: Response) => {
-    console.log('📸 getPhotos: вызов GET /');
+
+
+// ✅ GET все — async
+
+export const getPhotos = async (req: express.Request, res: express.Response) => {
 
     try {
+
         const photos = await getAllPhotos();
-        console.log('📸 getPhotos: ответ =', photos);
+
         res.json(photos);
+
     } catch (error) {
-        console.error('💥 getPhotos error:', error);
+
         res.status(500).json({ error: 'Ошибка сервера' });
+
     }
+
 };
 
-// ✅ POST с файлом — middleware array
-export const createPhotoHandler: RequestHandler[] = [
+
+
+// ✅ POST с файлом — async middleware
+
+export const createPhotoHandler: expressType.RequestHandler[] = [
+
     upload.single("photo"),
-    async (req: Request, res: Response) => {
-        console.log("📸 createPhotoHandler: title = ", req.body.title);
-        console.log("📸 createPhotoHandler: file = ", (req as any).file);
+
+    async (req: expressType.Request, res: express.Response) => {
 
         try {
+
             const { title } = req.body;
+
             const file = (req as any).file;
 
+
+
             if (!title || !file) {
-                console.log("❌ createPhotoHandler: title or file missing");
+
                 return res.status(400).json({ error: "Название и фото обязательны" });
+
             }
 
+
+
             const newPhoto = await createPhoto({
+
                 title,
+
                 filename: file.filename,
-                filepath: `/uploads/${file.filename}`,
+
+                filepath: `/uploads/${file.filename}`
+
             });
 
-            console.log("✅ createPhotoHandler: создано фото =", newPhoto);
+
+
             res.status(201).json(newPhoto);
+
         } catch (error) {
-            console.error('💥 createPhotoHandler error:', error);
+
             res.status(500).json({ error: 'Ошибка создания' });
+
         }
+
     }
+
 ];
 
-// ✅ GET /:id
-export const getPhoto = async (req: Request, res: Response) => {
-    console.log("📸 getPhoto: idParam =", req.params.id);
+
+
+// ✅ GET /:id — async
+
+export const getPhoto = async (req: express.Request, res: express.Response) => {
 
     try {
-        const idParam = req.params.id;
-        if (typeof idParam !== 'string') {
-            return res.status(400).json({ error: "ID должен быть строкой" });
-        }
 
-        const id: string = idParam;
+        const id = req.params.id as string;
 
         const photo = await getPhotoById(id);
+
         if (!photo) return res.status(404).json({ error: "Фото не найдено" });
 
-        console.log("📸 getPhoto: найдено =", photo);
         res.json(photo);
+
     } catch (error) {
-        console.error('💥 getPhoto error:', error);
+
         res.status(500).json({ error: 'Ошибка сервера' });
+
     }
+
 };
 
-// ✅ PUT /:id — только title
-export const updatePhotoHandler = async (req: Request, res: Response) => {
-    console.log("📸 updatePhotoHandler: idParam =", req.params.id);
-    console.log("📸 updatePhotoHandler: body =", req.body);
+
+
+// ✅ PUT /:id — async
+
+export const updatePhotoHandler = async (req: express.Request, res: express.Response) => {
 
     try {
-        const idParam = req.params.id;
-        if (typeof idParam !== 'string') {
-            return res.status(400).json({ error: "ID должен быть строкой" });
-        }
 
-        const id: string = idParam;
+        const id = req.params.id as string;
+
         const { title } = req.body;
 
-        if (!title) {
-            console.log("❌ updatePhotoHandler: title missing");
-            return res.status(400).json({ error: "title обязателен" });
+
+
+        if (!title || typeof id !== "string") {
+
+            return res.status(400).json({ error: "ID и title обязательны" });
+
         }
+
+
 
         const updated = await updatePhoto(id, { title });
+
         if (!updated) return res.status(404).json({ error: "Фото не найдено" });
 
-        console.log("✅ updatePhotoHandler: обновлено =", updated);
         res.json(updated);
+
     } catch (error) {
-        console.error('💥 updatePhotoHandler error:', error);
+
         res.status(500).json({ error: 'Ошибка обновления' });
+
     }
+
 };
 
-// ✅ DELETE /:id
-export const deletePhotoHandler = async (req: Request, res: Response) => {
-    console.log("📸 deletePhotoHandler: idParam =", req.params.id);
+
+
+// ✅ DELETE /:id — async
+
+export const deletePhotoHandler = async (req: express.Request, res: express.Response) => {
 
     try {
-        const idParam = req.params.id;
-        if (typeof idParam !== 'string') {
+
+        const id = req.params.id as string;
+
+        if (typeof id !== "string") {
+
             return res.status(400).json({ error: "ID неверный" });
+
         }
 
-        const id: string = idParam;
+
 
         const deleted = await deletePhoto(id);
+
         if (!deleted) return res.status(404).json({ error: "Фото не найдено" });
 
-        console.log("✅ deletePhotoHandler: удалено id =", id);
         res.json({ message: "Фото удалено" });
+
     } catch (error) {
-        console.error('💥 deletePhotoHandler error:', error);
+
         res.status(500).json({ error: 'Ошибка удаления' });
+
     }
+
 };

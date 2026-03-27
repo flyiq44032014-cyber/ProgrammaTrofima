@@ -1,6 +1,21 @@
 import sqlite3 from 'sqlite3';
+import path from 'path';
+import type { Database, RunResult } from 'sqlite3';
 
-// ❗ если у тебя интерфейс Photo в другом месте — укажи правильный путь
+const dbPath = path.join(process.cwd(), 'photos.db');
+const db: Database = new sqlite3.Database(dbPath);
+
+db.serialize(() => {
+    db.run(`
+        CREATE TABLE IF NOT EXISTS photos (
+                                              id TEXT PRIMARY KEY,
+                                              title TEXT NOT NULL,
+                                              filename TEXT NOT NULL,
+                                              filepath TEXT NOT NULL
+        )
+    `);
+});
+
 export interface Photo {
     id: string;
     title: string;
@@ -8,129 +23,74 @@ export interface Photo {
     filepath: string;
 }
 
-const DB_PATH = ':memory:';
-
-const db = new sqlite3.Database(DB_PATH, (err) => {
-    if (err) {
-        console.error('🗄️ DB connection error:', err);
-    } else {
-        console.log('✅ DB connected:', DB_PATH);
-    }
-});
-
-// Создать таблицу, если нет
-db.serialize(() => {
-    db.run(
-        `CREATE TABLE IF NOT EXISTS photos (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT NOT NULL,
-      filename TEXT NOT NULL,
-      filepath TEXT NOT NULL
-    )`
-    );
-    console.log('🗄️ Creating table...');
-});
-
-// Получить все фото
-export const getAllPhotos = (): Promise<Photo[]> => {
+export async function getAllPhotos(): Promise<Photo[]> {
     return new Promise((resolve, reject) => {
-        db.all('SELECT * FROM photos', (err, rows) => {
-            if (err) {
-                console.error('🗄️ getAllPhotos error:', err);
-                reject(err);
-            } else {
-                console.log('🗄️ getAllPhotos rows:', rows);
-                resolve(rows as Photo[]);
-            }
+        db.all('SELECT * FROM photos', [], (err, rows: Photo[]) => {
+            if (err) reject(err);
+            else resolve(rows);
         });
     });
-};
+}
 
-// Добавить фото
-export const createPhoto = (photo: Omit<Photo, 'id'>): Promise<Photo> => {
-    console.log('📁 createPhoto: data =', photo);
-
-    const { title, filename, filepath } = photo;
-
+export async function createPhoto(data: { title: string; filename: string; filepath: string }): Promise<Photo> {
     return new Promise((resolve, reject) => {
-        const sql = `INSERT INTO photos (title, filename, filepath) VALUES (?, ?, ?)`;
-        const params = [title, filename, filepath];
-
-        db.run(sql, params, function (err) {
-            if (err) {
-                console.error('🗄️ createPhoto error:', err);
-                reject(err);
-            } else {
-                console.log(`🗄️ createPhoto success, lastID = ${this.lastID}`);
-                const newPhoto: Photo = {
-                    id: String(this.lastID),
-                    title,
-                    filename,
-                    filepath
-                };
-                resolve(newPhoto);
-            }
-        });
-    });
-};
-
-// Получить по ID
-export const getPhotoById = (id: string): Promise<Photo | null> => {
-    console.log('📁 getPhotoById: id =', id);
-
-    return new Promise((resolve, reject) => {
-        db.get('SELECT * FROM photos WHERE id = ?', [id], (err, row) => {
-            if (err) {
-                console.error('🗄️ getPhotoById error:', err);
-                reject(err);
-            } else {
-                console.log('📁 getPhotoById row =', row);
-                resolve(row ? (row as Photo) : null);
-            }
-        });
-    });
-};
-
-// Обновить по ID
-export const updatePhoto = (id: string, data: { title: string }): Promise<Photo | null> => {
-    console.log('📁 updatePhoto: id =', id, 'data =', data);
-
-    return new Promise((resolve, reject) => {
+        const id = Date.now().toString();
         db.run(
-            `UPDATE photos SET title = ? WHERE id = ?`,
-            [data.title, id],
-            function (err) {
-                if (err) {
-                    console.error('🗄️ updatePhoto error:', err);
-                    reject(err);
-                } else {
-                    if (this.changes === 0) {
-                        console.log('📁 updatePhoto: no rows updated, id =', id);
-                        resolve(null);
-                    } else {
-                        getPhotoById(id)
-                            .then(photo => resolve(photo))
-                            .catch(reject);
-                    }
-                }
+            'INSERT INTO photos (id, title, filename, filepath) VALUES (?, ?, ?, ?)',
+            [id, data.title, data.filename, data.filepath],
+            function(err: Error | null) {
+                if (err) reject(err);
+                else resolve({ id, ...data });
             }
         );
     });
-};
+}
 
-// Удалить по ID
-export const deletePhoto = (id: string): Promise<boolean> => {
-    console.log('📁 deletePhoto: id =', id);
-
+export async function getPhotoById(id: string): Promise<Photo | null> {
     return new Promise((resolve, reject) => {
-        db.run('DELETE FROM photos WHERE id = ?', [id], function (err) {
-            if (err) {
-                console.error('🗄️ deletePhoto error:', err);
-                reject(err);
-            } else {
-                console.log('📁 deletePhoto changes =', this.changes);
-                resolve(this.changes > 0);
-            }
+        db.get('SELECT * FROM photos WHERE id = ?', [id], (err: Error | null, row: Photo | undefined) => {
+            if (err) reject(err);
+            else resolve(row ?? null);
         });
     });
-};
+}
+
+export async function updatePhoto(id: string, data: Partial<Photo>): Promise<Photo | null> {
+    return new Promise((resolve, reject) => {
+        db.get('SELECT * FROM photos WHERE id = ?', [id], (err: Error | null, row: Photo | undefined) => {
+            if (err) return reject(err);
+            if (!row) return resolve(null);
+
+            const updates: Record<string, string> = {};
+            if (data.title !== undefined) updates.title = data.title;
+
+            const updateKeys = Object.keys(updates);
+            if (updateKeys.length === 0) return resolve(row);
+
+            db.run(
+                `UPDATE photos SET ${updateKeys.map(k => `${k}=?`).join(',')} WHERE id = ?`,
+                [...Object.values(updates), id],
+                function(err: Error | null) {
+                    if (err) reject(err);
+                    else resolve({ ...row, ...updates });
+                }
+            );
+        });
+    });
+}
+
+export async function deletePhoto(id: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+        db.run('DELETE FROM photos WHERE id = ?', [id], function(err: Error | null) {
+            if (err) reject(err);
+            else resolve(this.changes > 0);
+        });
+    });
+}
+
+process.on('SIGINT', () => {
+    db.close((err) => {
+        if (err) console.error('Ошибка закрытия БД:', err);
+        process.exit(0);
+    });
+});

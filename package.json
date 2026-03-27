@@ -3,15 +3,13 @@
   "version": "1.0.0",
   "main": "dist/index.js",
   "license": "MIT",
-  "type": "module",
   "scripts": {
+    "watch": "tsc -w",
+    "dev": "nodemon \"node dist/index.js\"",
     "build": "tsc",
-    "vercel-build": "tsc",
-    "start": "node dist/rsc/index.js"
+    "start": "node dist/index.js"
   },
-  "engines": {
-    "node": ">=18"
-  },
+  "type": "module",
   "dependencies": {
     "express": "^5.2.1",
     "multer": "^2.1.1",
@@ -21,6 +19,7 @@
     "@types/express": "^5.0.6",
     "@types/multer": "^2.1.0",
     "@types/node": "^25.5.0",
+    "@types/sqlite3": "^3.1.11",
     "nodemon": "^3.1.14",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.2"
