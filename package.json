@@ -7,6 +7,7 @@
   "scripts": {
     "watch": "tsc -w",
     "dev": "nodemon \"node dist/index.js\"",
+    "postinstall": "npm rebuild sqlite3",
     "build": "tsc",
     "start": "npm run build && node dist/index.js"
   },
