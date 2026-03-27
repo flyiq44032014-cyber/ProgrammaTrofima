@@ -45,12 +45,6 @@ app.get('/', (req, res) => {
 
 });
 
+export default app;
 
 
-app.listen(port, () => {
-
-    console.log(`Server on port ${port}`);
-
-    console.log('Serving:', path.join(process.cwd(), 'public/index.html'));
-
-});
