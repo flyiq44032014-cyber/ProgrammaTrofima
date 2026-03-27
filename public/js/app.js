@@ -44,7 +44,16 @@ async function createPhoto(e) {
             form.reset();
             loadPhotos();
         } else {
-            alert('Ошибка загрузки');
+            let msg = 'Ошибка загрузки';
+            try {
+                const data = await res.json();
+                if (data && (data.details || data.error)) {
+                    msg = [data.error, data.details].filter(Boolean).join(': ');
+                }
+            } catch {
+                // ignore
+            }
+            alert(msg);
         }
     } catch (err) {
         alert('Ошибка сети');

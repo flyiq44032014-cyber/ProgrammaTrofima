@@ -6,7 +6,8 @@ import { getAllPhotos, createPhoto, getPhotoById, updatePhoto, deletePhoto } fro
 
 const upload = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: 5 * 1024 * 1024 },
+    // Vercel serverless payload limit is typically ~4.5 MB; stay below it
+    limits: { fileSize: 4 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
         if (file.mimetype.startsWith("image/")) {
             cb(null, true);
@@ -16,9 +17,13 @@ const upload = multer({
     }
 });
 
-cloudinary.config({
-    cloudinary_url: process.env.CLOUDINARY_URL
-});
+// Load cloud_name / api_key / api_secret from process.env.CLOUDINARY_URL (cloudinary://...)
+cloudinary.config(true);
+
+function cloudinaryConfigured(): boolean {
+    const cfg = cloudinary.config() as { cloud_name?: string; api_key?: string; api_secret?: string };
+    return Boolean(cfg.cloud_name && cfg.api_key && cfg.api_secret);
+}
 
 
 
@@ -64,7 +69,12 @@ export const createPhotoHandler: expressType.RequestHandler[] = [
 
             }
 
-
+            if (!cloudinaryConfigured()) {
+                return res.status(503).json({
+                    error: "Cloudinary не настроен",
+                    details: "Добавьте CLOUDINARY_URL в Environment Variables проекта на Vercel (формат cloudinary://api_key:api_secret@cloud_name)."
+                });
+            }
 
             const uploaded = await new Promise<{ secure_url: string; public_id: string }>((resolve, reject) => {
                 const stream = cloudinary.uploader.upload_stream(
@@ -96,7 +106,9 @@ export const createPhotoHandler: expressType.RequestHandler[] = [
 
         } catch (error) {
 
-            res.status(500).json({ error: 'Ошибка создания' });
+            const message = error instanceof Error ? error.message : String(error);
+            console.error("POST /api/photos:", error);
+            res.status(500).json({ error: "Ошибка создания", details: message });
 
         }
 
