@@ -1,10 +1,16 @@
 
-const API_BASE = '/api/photos/';
+// Без завершающего «/» — иначе POST на /api/photos/ на Vercel даёт 405 и HTML вместо JSON
+const API_BASE = '/api/photos';
 const form = document.getElementById('photoForm');
 const list = document.getElementById('photoList');
 
 async function loadPhotos() {
     const res = await fetch(API_BASE);
+    const ct = res.headers.get('content-type') || '';
+    if (!ct.includes('application/json')) {
+        list.innerHTML = '<li>Не удалось загрузить список (ожидался JSON).</li>';
+        return;
+    }
     const photos = await res.json();
     list.innerHTML = photos.map(photo => `
         <li>
@@ -61,14 +67,14 @@ async function createPhoto(e) {
 }
 
 async function deletePhoto(id) {
-    await fetch(API_BASE + id, { method: 'DELETE' });
+    await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
     loadPhotos();
 }
 
 function editPhoto(id, currentTitle) {
     const newTitle = prompt('Новое название:', currentTitle);
     if (newTitle) {
-        fetch(API_BASE + id, {
+        fetch(`${API_BASE}/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ title: newTitle })
