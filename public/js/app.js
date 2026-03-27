@@ -1,11 +1,10 @@
 
-// Без /api — на Vercel префикс /api зарезервирован под serverless-файлы в папке api/
-const API_BASE = '/photos';
+const API_BASE = '/api/photos';
 const form = document.getElementById('photoForm');
 const list = document.getElementById('photoList');
 
 async function loadPhotos() {
-    const res = await fetch(API_BASE);
+    const res = await fetch(API_BASE, { cache: 'no-store' });
     const ct = res.headers.get('content-type') || '';
     if (!ct.includes('application/json')) {
         list.innerHTML = '<li>Не удалось загрузить список (ожидался JSON).</li>';
@@ -43,7 +42,8 @@ async function createPhoto(e) {
     try {
         const res = await fetch(API_BASE, {
             method: 'POST',
-            body: formData
+            body: formData,
+            cache: 'no-store'
         });
 
         if (res.ok) {
@@ -67,7 +67,7 @@ async function createPhoto(e) {
 }
 
 async function deletePhoto(id) {
-    await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
+    await fetch(`${API_BASE}/${id}`, { method: 'DELETE', cache: 'no-store' });
     loadPhotos();
 }
 
@@ -77,7 +77,8 @@ function editPhoto(id, currentTitle) {
         fetch(`${API_BASE}/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title: newTitle })
+            body: JSON.stringify({ title: newTitle }),
+            cache: 'no-store'
         }).then(loadPhotos);
     }
 }

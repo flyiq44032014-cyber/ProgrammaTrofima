@@ -41,7 +41,7 @@ if (process.env.VERCEL) {
 
 app.use(express.json());
 
-app.use("/photos", photosRouter);
+app.use("/api/photos", photosRouter);
 
 app.use((err: unknown, req: express.Request, res: express.Response, _next: NextFunction) => {
     console.error(err);
