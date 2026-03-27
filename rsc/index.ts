@@ -1,3 +1,5 @@
+
+import 'dotenv/config';
 import express from 'express';
 
 import photosRouter from "./routes/photos.js";
@@ -17,6 +19,9 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 const port = 3000;
+
+
+console.log('TROFIM_POSTGRES_URL:', process.env.TROFIM_POSTGRES_URL); // <---- добавь это
 
 
 

@@ -4,19 +4,13 @@
     "outDir": "./dist",
     "module": "nodenext",
     "target": "esnext",
-
-    // для Node:
     "moduleResolution": "nodenext",
     "lib": ["esnext"],
-    "types": ["node"],
-
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
-
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
-
     "strict": true,
     "jsx": "react-jsx",
     "verbatimModuleSyntax": true,
@@ -24,5 +18,9 @@
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true
-  }
+  },
+  "include": [
+    "rsc/**/*",
+    "types.d.ts"
+  ]
 }
