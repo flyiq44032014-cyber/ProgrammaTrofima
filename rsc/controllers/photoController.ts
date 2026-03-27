@@ -1,11 +1,18 @@
 import express from "express";
-import type { Request, Response, RequestHandler } from "express"; // ✅ лучше так, чем expressType
+import type { Request, Response, RequestHandler } from "express";
 
 import multer from "multer";
 import path from "path";
-import fs from "fs";
 
-import type { Photo } from "../services/photoService.js";
+// тип фото (для совместимости с photoService)
+export type Photo = {
+    id: string;
+    title: string;
+    filename: string;
+    filepath: string;
+};
+
+import type { Photo as InternalPhoto } from "../services/photoService.js";
 import {
     getAllPhotos,
     createPhoto,
@@ -14,11 +21,8 @@ import {
     deletePhoto,
 } from "../services/photoService.js";
 
-// ✅ uploads папка
+// ✅ uploads папка (создаётся в index.ts при старте сервера)
 const uploadDir = path.join(process.cwd(), "uploads");
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
 
 // ✅ Multer config
 const storage = multer.diskStorage({
@@ -42,11 +46,11 @@ const upload = multer({
 
 // ✅ GET все
 export const getPhotos = async (req: Request, res: Response) => {
-    console.log("📸 getPhotos: вызов GET /");
+    console.log('📸 getPhotos: вызов GET /');
 
     try {
         const photos = await getAllPhotos();
-        console.log("📸 getPhotos: ответ =", photos);
+        console.log('📸 getPhotos: ответ =', photos);
         res.json(photos);
     } catch (error) {
         console.error('💥 getPhotos error:', error);
@@ -54,12 +58,12 @@ export const getPhotos = async (req: Request, res: Response) => {
     }
 };
 
-// ✅ POST с файлом
+// ✅ POST с файлом — middleware array
 export const createPhotoHandler: RequestHandler[] = [
     upload.single("photo"),
     async (req: Request, res: Response) => {
-        console.log("📸 createPhotoHandler: raw body =", req.body);
-        console.log("📸 createPhotoHandler: raw file =", (req as any).file);
+        console.log("📸 createPhotoHandler: title = ", req.body.title);
+        console.log("📸 createPhotoHandler: file = ", (req as any).file);
 
         try {
             const { title } = req.body;
