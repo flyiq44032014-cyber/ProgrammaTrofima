@@ -1,26 +1,19 @@
 {
   "compilerOptions": {
-    "rootDir": "./rsc",
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "node",
     "outDir": "./dist",
-    "module": "nodenext",
-    "target": "esnext",
-    "moduleResolution": "nodenext",
-    "lib": ["esnext"],
-    "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true,
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
+    "rootDir": "./rsc",
     "strict": true,
-    "jsx": "react-jsx",
-    "verbatimModuleSyntax": true,
-    "isolatedModules": true,
-    "noUncheckedSideEffectImports": true,
-    "moduleDetection": "force",
-    "skipLibCheck": true
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
   },
   "include": [
-    "rsc/**/*",
-    "types.d.ts"
+    "rsc/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
   ]
 }

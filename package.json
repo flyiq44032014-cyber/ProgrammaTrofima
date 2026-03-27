@@ -1,33 +1,26 @@
 {
   "name": "ProgrammaTrofima",
   "version": "1.0.0",
+  "description": "Express API with Cloudinary and PostgreSQL",
   "main": "dist/index.js",
-  "license": "MIT",
-  "scripts": {
-    "watch": "tsc -w",
-    "dev": "node --loader ts-node/esm dist/index.js",
-    "build": "tsc",
-    "start": "node -r dotenv/config dist/index.js"
-  },
   "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "node --loader ts-node/esm dist/index.js",
+    "start": "node dist/index.js"
+  },
   "dependencies": {
-    "@types/cors": "^2.8.19",
-    "cloudinary": "^2.9.0",
-    "cors": "^2.8.6",
-    "dotenv": "^17.3.1",
-    "express": "^5.2.1",
-    "multer": "^2.1.1",
-    "pg": "^8.20.0",
-    "sqlite3": "^5.1.7"
+    "express": "^4.x",
+    "dotenv": "^16.x",
+    "cloudinary": "^1.x",
+    "multer": "^1.x",
+    "pg": "^8.x"
   },
   "devDependencies": {
-    "@types/express": "^5.0.6",
-    "@types/multer": "^2.1.0",
-    "@types/node": "^25.5.0",
-    "@types/pg": "^8.20.0",
-    "@types/sqlite3": "^3.1.11",
-    "nodemon": "^3.1.14",
-    "ts-node": "^10.9.2",
-    "typescript": "^6.0.2"
+    "typescript": "^5.x",
+    "@types/express": "^5.x",
+    "@types/node": "^20.x",
+    "@types/multer": "^1.x",
+    "ts-node": "^10.x"
   }
 }
