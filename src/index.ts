@@ -52,19 +52,19 @@ app.use((err: unknown, req: express.Request, res: express.Response, _next: NextF
     res.status(500).type("text").send("Internal server error");
 });
 
-if (!process.env.VERCEL) {
-    app.use(express.static(path.join(process.cwd(), "public")));
+app.use(express.static(path.join(process.cwd(), "public")));
 
-    app.get("/", (req, res, next) => {
-        const indexPath = path.resolve(process.cwd(), "public", "index.html");
-        if (!fs.existsSync(indexPath)) {
-            return res.status(500).type("text").send("Missing public/index.html");
-        }
-        res.sendFile(indexPath, err => {
-            if (err) next(err);
-        });
+app.get("/", (req, res, next) => {
+    const indexPath = path.resolve(process.cwd(), "public", "index.html");
+    if (!fs.existsSync(indexPath)) {
+        return res.status(500).type("text").send("Missing public/index.html");
+    }
+    res.sendFile(indexPath, err => {
+        if (err) next(err);
     });
+});
 
+if (!process.env.VERCEL) {
     app.listen(port, () => {
         console.log(`Server running on http://localhost:${port}`);
     });

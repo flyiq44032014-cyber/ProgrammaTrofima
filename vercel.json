@@ -4,11 +4,12 @@
   "buildCommand": "yarn build",
   "functions": {
     "api/index.ts": {
-      "includeFiles": "dist/**"
+      "includeFiles": ["dist/**", "public/**"]
     }
   },
   "rewrites": [
     { "source": "/api", "destination": "/api" },
-    { "source": "/api/:path*", "destination": "/api" }
+    { "source": "/api/:path*", "destination": "/api" },
+    { "source": "/(.*)", "destination": "/api" }
   ]
 }
