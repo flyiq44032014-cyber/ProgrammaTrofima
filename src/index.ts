@@ -11,7 +11,26 @@ const port = 3000;
 
 if (process.env.VERCEL) {
     app.use((req, _res, next) => {
-        if (req.originalUrl && req.originalUrl !== req.url) {
+        const fromHeader =
+            typeof req.headers["x-invoke-path"] === "string"
+                ? req.headers["x-invoke-path"]
+                : typeof req.headers["x-forwarded-uri"] === "string"
+                  ? req.headers["x-forwarded-uri"]
+                  : typeof req.headers["x-vercel-forwarded-path"] === "string"
+                    ? req.headers["x-vercel-forwarded-path"]
+                    : undefined;
+
+        if (fromHeader) {
+            try {
+                const normalized = fromHeader.startsWith("http")
+                    ? fromHeader
+                    : `http://localhost${fromHeader.startsWith("/") ? "" : "/"}${fromHeader}`;
+                const u = new URL(normalized);
+                req.url = u.pathname + u.search;
+            } catch {
+                req.url = fromHeader.startsWith("/") ? fromHeader : `/${fromHeader}`;
+            }
+        } else if (req.originalUrl && req.originalUrl !== req.url) {
             req.url = req.originalUrl;
         }
         next();
