@@ -2,20 +2,31 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Фото галерея</title>
+    <link rel="stylesheet" href="/css/styles.css">
     <script src="/js/app.js" defer></script>
 </head>
 <body>
-<h1>Управление фото</h1>
+<div class="page">
+    <header class="header">
+        <h1 class="title">Управление фото</h1>
+        <p class="subtitle">Загрузка и редактирование изображений</p>
+    </header>
 
-<!-- ✅ Новая форма для multer -->
-<form id="photoForm" enctype="multipart/form-data">
-    <input type="text" id="title" name="title" placeholder="Название" required>
-    <input type="file" id="photo" name="photo" accept="image/*" required>
-    <button type="submit">Загрузить фото</button>
-</form>
+    <section class="card card--form" aria-label="Загрузка фото">
+        <form id="photoForm" class="form" enctype="multipart/form-data">
+            <label class="visually-hidden" for="title">Название</label>
+            <input type="text" id="title" name="title" placeholder="Название" required class="input">
+            <label class="visually-hidden" for="photo">Файл изображения</label>
+            <input type="file" id="photo" name="photo" accept="image/*" required class="input input--file">
+            <button type="submit" class="btn btn-primary">Загрузить фото</button>
+        </form>
+    </section>
 
-<ul id="photoList"></ul>
-
+    <section class="gallery" aria-label="Список фото">
+        <ul id="photoList" class="photo-list"></ul>
+    </section>
+</div>
 </body>
 </html>

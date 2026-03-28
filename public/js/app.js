@@ -15,16 +15,20 @@ async function loadPhotos() {
     const res = await fetch(API_BASE, { cache: 'no-store' });
     const ct = res.headers.get('content-type') || '';
     if (!ct.includes('application/json')) {
-        list.innerHTML = '<li>Не удалось загрузить список (ожидался JSON).</li>';
+        list.innerHTML = '<li class="list-error">Не удалось загрузить список (ожидался JSON).</li>';
         return;
     }
     const photos = await res.json();
     list.innerHTML = photos.map(photo => `
-        <li>
-            <img src="${escapeHtml(photo.filepath)}" width="100" height="100" style="cursor:pointer;" class="photo-thumb" data-modal-src="${escapeHtml(photo.filepath)}">
-            ${escapeHtml(photo.title)}
-            <button type="button" class="btn-edit" data-photo-id="${escapeHtml(photo.id)}" data-photo-title="${escapeHtml(photo.title)}">Изменить</button>
-            <button type="button" class="btn-delete" data-photo-id="${escapeHtml(photo.id)}">Удалить</button>
+        <li class="photo-card">
+            <img src="${escapeHtml(photo.filepath)}" alt="" width="88" height="88" class="photo-thumb" data-modal-src="${escapeHtml(photo.filepath)}">
+            <div class="photo-meta">
+                <span class="photo-title">${escapeHtml(photo.title)}</span>
+                <div class="photo-actions">
+                    <button type="button" class="btn btn-edit" data-photo-id="${escapeHtml(photo.id)}" data-photo-title="${escapeHtml(photo.title)}">Изменить</button>
+                    <button type="button" class="btn btn-delete" data-photo-id="${escapeHtml(photo.id)}">Удалить</button>
+                </div>
+            </div>
         </li>
     `).join('');
 }
@@ -137,19 +141,24 @@ let modalImg = document.getElementById('modalImg');
 if (!modal) {
     modal = document.createElement('div');
     modal.id = 'modal';
-    modal.style.cssText = 'display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:999;';
-    modal.innerHTML = '<img id="modalImg" style="display:block;margin:5rem auto;max-width:90%;max-height:90%;"><button onclick="closeModal()" style="position:absolute;top:1rem;right:1rem;color:white;background:red;border:none;padding:10px;cursor:pointer;">×</button>';
+    modal.className = 'modal';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Просмотр фото');
+    modal.innerHTML =
+        '<img id="modalImg" class="modal__img" alt="Просмотр в полном размере">' +
+        '<button type="button" class="modal__close" onclick="closeModal()" aria-label="Закрыть">×</button>';
     document.body.appendChild(modal);
     modalImg = document.getElementById('modalImg');
 }
 
 function openModal(imagePath) {
     modalImg.src = imagePath;
-    modal.style.display = 'block';
+    modal.classList.add('is-open');
 }
 
 function closeModal() {
-    modal.style.display = 'none';
+    modal.classList.remove('is-open');
 }
 
 modal.onclick = function(e) {
