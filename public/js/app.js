@@ -21,10 +21,10 @@ async function loadPhotos() {
     const photos = await res.json();
     list.innerHTML = photos.map(photo => `
         <li>
-            <img src="${escapeHtml(photo.filepath)}" width="100" height="100" style="cursor:pointer;" onclick='openModal(${JSON.stringify(photo.filepath)})'>
+            <img src="${escapeHtml(photo.filepath)}" width="100" height="100" style="cursor:pointer;" class="photo-thumb" data-modal-src="${escapeHtml(photo.filepath)}">
             ${escapeHtml(photo.title)}
-            <button type="button" onclick="editPhoto(${JSON.stringify(photo.id)}, ${JSON.stringify(photo.title)})">Изменить</button>
-            <button type="button" onclick="deletePhoto(${JSON.stringify(photo.id)})">Удалить</button>
+            <button type="button" class="btn-edit" data-photo-id="${escapeHtml(photo.id)}" data-photo-title="${escapeHtml(photo.title)}">Изменить</button>
+            <button type="button" class="btn-delete" data-photo-id="${escapeHtml(photo.id)}">Удалить</button>
         </li>
     `).join('');
 }
@@ -75,21 +75,60 @@ async function createPhoto(e) {
 }
 
 async function deletePhoto(id) {
-    await fetch(`${API_BASE}/${id}`, { method: 'DELETE', cache: 'no-store' });
+    const res = await fetch(`${API_BASE}/${encodeURIComponent(id)}`, { method: 'DELETE', cache: 'no-store' });
+    if (!res.ok) {
+        let msg = 'Не удалось удалить';
+        try {
+            const data = await res.json();
+            if (data && data.error) msg = data.error;
+        } catch {
+            /* empty body */
+        }
+        alert(msg);
+        return;
+    }
     loadPhotos();
 }
 
-function editPhoto(id, currentTitle) {
+async function editPhoto(id, currentTitle) {
     const newTitle = prompt('Новое название:', currentTitle);
-    if (newTitle) {
-        fetch(`${API_BASE}/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title: newTitle }),
-            cache: 'no-store'
-        }).then(loadPhotos);
+    if (newTitle == null || newTitle === '') return;
+    const res = await fetch(`${API_BASE}/${encodeURIComponent(id)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newTitle }),
+        cache: 'no-store'
+    });
+    if (!res.ok) {
+        let msg = 'Не удалось сохранить';
+        try {
+            const data = await res.json();
+            if (data && data.error) msg = data.error;
+        } catch {
+            /* empty body */
+        }
+        alert(msg);
+        return;
     }
+    loadPhotos();
 }
+
+list.addEventListener('click', e => {
+    const thumb = e.target.closest('.photo-thumb');
+    if (thumb && thumb.dataset.modalSrc) {
+        openModal(thumb.dataset.modalSrc);
+        return;
+    }
+    const editBtn = e.target.closest('.btn-edit');
+    if (editBtn && editBtn.dataset.photoId != null) {
+        editPhoto(editBtn.dataset.photoId, editBtn.dataset.photoTitle ?? '');
+        return;
+    }
+    const delBtn = e.target.closest('.btn-delete');
+    if (delBtn && delBtn.dataset.photoId != null) {
+        deletePhoto(delBtn.dataset.photoId);
+    }
+});
 
 // Модалка для просмотра фото
 let modal = document.getElementById('modal');
